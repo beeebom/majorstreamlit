@@ -3,7 +3,6 @@
 [![Python](https://img.shields.io/badge/Python-3.11+-blue.svg)](https://python.org)
 [![OpenCV](https://img.shields.io/badge/OpenCV-4.8+-green.svg)](https://opencv.org)
 [![Streamlit](https://img.shields.io/badge/Streamlit-1.28+-red.svg)](https://streamlit.io)
-[![License](https://img.shields.io/badge/License-MIT-yellow.svg)](LICENSE)
 
 A sophisticated video encryption system that implements multiple layers of security to protect sensitive video content through advanced cryptographic techniques and face detection-based regional encryption.
 
@@ -42,7 +41,7 @@ A sophisticated video encryption system that implements multiple layers of secur
 
 1. **Clone the repository**
    ```bash
-   git clone https://github.com/yourusername/video-encryption-system.git
+   git clone https://github.com/beeebom/video-encryption-system.git
    cd video-encryption-system
    ```
 
@@ -138,23 +137,6 @@ video-encryption-system/
 - **Encryption Time**: ~15.2ms per frame
 - **Memory Usage**: ~245MB typical
 
-## 🎯 Presentation Features
-
-### Interactive Demos
-- **Key Generation**: Real-time RSA and symmetric key generation
-- **Face Detection**: Upload images and see detection results
-- **Encryption Process**: Step-by-step encryption visualization
-- **Performance Charts**: Real-time processing metrics
-- **Live Video Demo**: Simulated video processing
-- **Terminal Simulation**: Complete program execution simulation
-
-### Visual Elements
-- **System Architecture**: Interactive flowchart
-- **Security Metrics**: Comprehensive security analysis
-- **Performance Charts**: Processing time breakdowns
-- **Before/After**: Encryption comparison images
-- **Terminal Display**: Authentic command-line interface
-
 ## 🏆 Project Highlights
 
 ### Innovation
@@ -206,23 +188,11 @@ This project demonstrates:
 - **Real-time Streaming**: Live video encryption
 - **Advanced Analytics**: Detailed performance metrics
 
-## 🤝 Contributing
-
-1. Fork the repository
-2. Create a feature branch (`git checkout -b feature/AmazingFeature`)
-3. Commit your changes (`git commit -m 'Add some AmazingFeature'`)
-4. Push to the branch (`git push origin feature/AmazingFeature`)
-5. Open a Pull Request
-
-## 📄 License
-
-This project is licensed under the MIT License - see the [LICENSE](LICENSE) file for details.
-
 ## 📞 Contact
 
-- **Project Link**: [https://github.com/yourusername/video-encryption-system](https://github.com/yourusername/video-encryption-system)
-- **Author**: Your Name
-- **Email**: your.email@example.com
+- **Project Link**: [https://github.com/beeebom/video-encryption-system](https://github.com/beeebom/video-encryption-system)
+- **Author**: beeebom
+- **Email**: satyam30378@gmail
 
 ## 🙏 Acknowledgments
 
@@ -234,17 +204,6 @@ This project is licensed under the MIT License - see the [LICENSE](LICENSE) file
 ---
 
 **Note**: This is a demonstration project showcasing advanced video encryption techniques. For production use, additional security considerations and testing would be required.
-
-## 📸 Screenshots
-
-### Main Application
-![Main Application](screenshots/main_app.png)
-
-### Streamlit Presentation
-![Streamlit App](screenshots/streamlit_app.png)
-
-### Terminal Simulation
-![Terminal Simulation](screenshots/terminal_sim.png)
 
 ---
 
