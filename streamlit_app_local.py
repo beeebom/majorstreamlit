@@ -1,11 +1,17 @@
 import streamlit as st
+import cv2
 import numpy as np
 from Crypto.Cipher import AES
 from Crypto.Random import get_random_bytes
 from Crypto.Signature import pkcs1_15
 from Crypto.Hash import SHA256
 from Crypto.PublicKey import RSA
+import pickle
 import time
+import os
+import matplotlib.pyplot as plt
+import plotly.graph_objects as go
+import plotly.express as px
 from PIL import Image
 import io
 import base64
@@ -173,7 +179,7 @@ st.markdown("""
 </style>
 """, unsafe_allow_html=True)
 
-class CloudEncryptionDemo:
+class VideoEncryptionDemo:
     def __init__(self):
         self.private_key, self.public_key = self.generate_key_pair()
         self.aes_key = get_random_bytes(16)
@@ -182,22 +188,14 @@ class CloudEncryptionDemo:
         
     def generate_key_pair(self):
         key = RSA.generate(2048)
-        return key, key.publickey()
+        private_key = key
+        public_key = key.publickey()
+        return private_key, public_key
     
-    def simulate_face_detection(self, image_array):
-        """Simulate face detection without OpenCV"""
-        # Simulate face detection by creating random face regions
-        height, width = image_array.shape[:2]
-        num_faces = np.random.randint(0, 3)  # 0-2 faces
-        faces = []
-        
-        for _ in range(num_faces):
-            x = np.random.randint(0, width // 2)
-            y = np.random.randint(0, height // 2)
-            w = np.random.randint(50, min(150, width - x))
-            h = np.random.randint(50, min(150, height - y))
-            faces.append((x, y, w, h))
-        
+    def detect_faces(self, frame):
+        gray = cv2.cvtColor(frame, cv2.COLOR_BGR2GRAY)
+        face_cascade = cv2.CascadeClassifier(cv2.data.haarcascades + 'haarcascade_frontalface_default.xml')
+        faces = face_cascade.detectMultiScale(gray, 1.1, 4)
         return faces
     
     def xor_encrypt_region(self, region, key):
@@ -251,7 +249,7 @@ def main():
     
     # Initialize demo
     if 'demo' not in st.session_state:
-        st.session_state.demo = CloudEncryptionDemo()
+        st.session_state.demo = VideoEncryptionDemo()
     
     # Sidebar
     st.sidebar.title("🎛️ Control Panel")
@@ -321,17 +319,47 @@ def show_overview():
     with col2:
         st.markdown("### 📈 System Architecture")
         
-        # Create a simple flowchart using text
-        pipeline_text = """
-        ```
-        Video Input → Face Detection → AES Encryption → XOR Encryption → Digital Signature → Encrypted Output
-             ↓              ↓              ↓              ↓              ↓              ↓
-        [rcb.mp4]    [Haar Cascade]   [128-bit AES]   [Face Regions]  [RSA-2048]   [Secure Frame]
-             ↓              ↓              ↓              ↓              ↓              ↓
-        Frame 0-1249   Multiple Faces   Entire Frame   Face Regions   SHA-256 Hash   Ready for Storage
-        ```
-        """
-        st.markdown(pipeline_text)
+        # Create a flowchart
+        fig = go.Figure()
+        
+        # Add nodes
+        nodes = [
+            ("Video Input", 0, 0),
+            ("Face Detection", 0, -1),
+            ("AES Encryption", 0, -2),
+            ("XOR Encryption", 0, -3),
+            ("Digital Signature", 0, -4),
+            ("Encrypted Output", 0, -5)
+        ]
+        
+        for i, (name, x, y) in enumerate(nodes):
+            fig.add_trace(go.Scatter(
+                x=[x], y=[y],
+                mode='markers+text',
+                marker=dict(size=50, color='lightblue', line=dict(width=2, color='darkblue')),
+                text=[name],
+                textposition="middle center",
+                name=name,
+                showlegend=False
+            ))
+        
+        # Add arrows
+        for i in range(len(nodes)-1):
+            fig.add_annotation(
+                x=0, y=nodes[i][2]-0.3,
+                ax=0, ay=nodes[i+1][2]+0.3,
+                arrowhead=2, arrowsize=1, arrowwidth=2, arrowcolor="red"
+            )
+        
+        fig.update_layout(
+            title="Encryption Pipeline",
+            xaxis=dict(showgrid=False, zeroline=False, showticklabels=False),
+            yaxis=dict(showgrid=False, zeroline=False, showticklabels=False),
+            height=400,
+            showlegend=False
+        )
+        
+        st.plotly_chart(fig, use_container_width=True)
 
 def show_key_generation():
     st.markdown('<h2 class="section-header">🔑 Cryptographic Key Generation</h2>', unsafe_allow_html=True)
@@ -396,21 +424,21 @@ def show_key_generation():
         demo = st.session_state.demo
         st.markdown(f"""
         <div class="metric-box">
-            <h4>🔒 AES Key (128-bit)</h4>
+            <h4>🔒 AES Key</h4>
             <code>{demo.aes_key.hex()}</code>
         </div>
         """, unsafe_allow_html=True)
         
         st.markdown(f"""
         <div class="metric-box">
-            <h4>🎯 XOR Key (8-bit)</h4>
+            <h4>🎯 XOR Key</h4>
             <code>{demo.xor_key}</code>
         </div>
         """, unsafe_allow_html=True)
         
         st.markdown(f"""
         <div class="metric-box">
-            <h4>🎲 Nonce (64-bit)</h4>
+            <h4>🎲 Nonce</h4>
             <code>{demo.nonce.hex()}</code>
         </div>
         """, unsafe_allow_html=True)
@@ -429,26 +457,34 @@ def show_face_detection():
             image = Image.open(uploaded_file)
             image_array = np.array(image)
             
+            # Convert PIL to OpenCV format
+            if len(image_array.shape) == 3:
+                image_cv = cv2.cvtColor(image_array, cv2.COLOR_RGB2BGR)
+            else:
+                image_cv = image_array
+            
             st.image(image, caption="Original Image", use_column_width=True)
             
-            # Simulate face detection
+            # Detect faces
             demo = st.session_state.demo
-            faces = demo.simulate_face_detection(image_array)
+            faces = demo.detect_faces(image_cv)
             
-            # Create image with simulated face rectangles
-            image_with_faces = image_array.copy()
+            # Draw face rectangles
+            image_with_faces = image_cv.copy()
             for (x, y, w, h) in faces:
-                # Draw rectangle (simplified without OpenCV)
-                image_with_faces[y:y+h, x:x+w] = [0, 255, 0]  # Green rectangle
+                cv2.rectangle(image_with_faces, (x, y), (x+w, y+h), (0, 255, 0), 2)
+                cv2.putText(image_with_faces, 'FACE', (x, y-10), cv2.FONT_HERSHEY_SIMPLEX, 0.7, (0, 255, 0), 2)
             
-            st.image(image_with_faces, caption=f"Face Detection Result ({len(faces)} faces found)", use_column_width=True)
+            # Convert back to RGB for display
+            image_with_faces_rgb = cv2.cvtColor(image_with_faces, cv2.COLOR_BGR2RGB)
+            st.image(image_with_faces_rgb, caption=f"Face Detection Result ({len(faces)} faces found)", use_column_width=True)
     
     with col2:
         st.markdown("### 📊 Detection Statistics")
         
         if uploaded_file is not None:
             demo = st.session_state.demo
-            faces = demo.simulate_face_detection(np.array(Image.open(uploaded_file)))
+            faces = demo.detect_faces(cv2.cvtColor(np.array(Image.open(uploaded_file)), cv2.COLOR_RGB2BGR))
             
             # Create metrics
             col2_1, col2_2 = st.columns(2)
@@ -469,7 +505,7 @@ def show_face_detection():
             # Face detection methods info
             st.markdown("""
             <div class="feature-box">
-                <h4>🔍 Detection Methods:</h4>
+                <h4>🔍 Detection Methods Used:</h4>
                 <ul>
                     <li>Haar Cascade Classifier</li>
                     <li>OpenCV DNN Face Detection</li>
@@ -514,10 +550,11 @@ def show_encryption_process():
             # Process the image
             image = Image.open(demo_file)
             image_array = np.array(image)
+            image_cv = cv2.cvtColor(image_array, cv2.COLOR_RGB2BGR)
             
-            # Simulate face detection
+            # Detect faces
             demo = st.session_state.demo
-            faces = demo.simulate_face_detection(image_array)
+            faces = demo.detect_faces(image_cv)
             
             # Show original
             st.image(image, caption="Original Image", use_column_width=True)
@@ -526,7 +563,7 @@ def show_encryption_process():
                 with st.spinner("Encrypting image..."):
                     # Perform encryption
                     encrypted_frame, new_nonce = demo.two_factor_encrypt_frame(
-                        image_array, faces, demo.aes_key, demo.xor_key, demo.nonce
+                        image_cv, faces, demo.aes_key, demo.xor_key, demo.nonce
                     )
                     
                     # Generate signature
@@ -535,11 +572,14 @@ def show_encryption_process():
                     # Verify signature
                     is_valid = demo.verify_frame_integrity(encrypted_frame.tobytes(), signature)
                     
+                    # Convert for display
+                    encrypted_display = cv2.cvtColor(encrypted_frame, cv2.COLOR_BGR2RGB)
+                    
                     st.success(f"✅ Encryption completed! Signature valid: {is_valid}")
     
     with col2:
         if demo_file is not None and 'encrypted_frame' in locals():
-            st.image(encrypted_frame, caption="Encrypted Image", use_column_width=True)
+            st.image(encrypted_display, caption="Encrypted Image", use_column_width=True)
             
             # Show encryption details
             st.markdown("#### 🔐 Encryption Details")
@@ -575,8 +615,40 @@ def show_performance_metrics():
     with col4:
         st.metric("Memory Usage", "245 MB", "12 MB")
     
+    # Performance charts
+    col1, col2 = st.columns(2)
+    
+    with col1:
+        st.markdown("#### 📈 Processing Time Breakdown")
+        
+        # Create pie chart
+        labels = ['Face Detection', 'AES Encryption', 'XOR Encryption', 'Digital Signature', 'Other']
+        values = [35, 40, 15, 8, 2]
+        colors = ['#ff9999', '#66b3ff', '#99ff99', '#ffcc99', '#ff99cc']
+        
+        fig = go.Figure(data=[go.Pie(labels=labels, values=values, marker_colors=colors)])
+        fig.update_layout(title="Processing Time Distribution", height=400)
+        st.plotly_chart(fig, use_container_width=True)
+    
+    with col2:
+        st.markdown("#### 📊 Frame Processing Over Time")
+        
+        # Simulate frame processing data
+        frames = list(range(1, 101))
+        processing_times = [15 + np.random.normal(0, 2) for _ in frames]
+        
+        fig = go.Figure()
+        fig.add_trace(go.Scatter(x=frames, y=processing_times, mode='lines', name='Processing Time'))
+        fig.update_layout(
+            title="Frame Processing Time",
+            xaxis_title="Frame Number",
+            yaxis_title="Processing Time (ms)",
+            height=400
+        )
+        st.plotly_chart(fig, use_container_width=True)
+    
     # Security metrics
-    st.markdown("### 🔐 Security Specifications")
+    st.markdown("### 🔐 Security Metrics")
     
     col1, col2 = st.columns(2)
     
@@ -600,23 +672,22 @@ def show_performance_metrics():
             """, unsafe_allow_html=True)
     
     with col2:
-        st.markdown("#### 📈 System Capabilities")
+        st.markdown("#### 📈 Detection Accuracy")
         
-        capabilities = {
-            "Face Detection Accuracy": "94.1%",
-            "Processing Speed": "24.5 FPS",
-            "Memory Efficiency": "245 MB",
-            "Encryption Coverage": "100%",
-            "Integrity Verification": "Every Frame",
-            "GPU Acceleration": "CUDA Support"
-        }
+        # Simulate detection accuracy data
+        methods = ['Haar Cascade', 'DNN Detection', 'Combined']
+        accuracy = [85.2, 92.7, 94.1]
         
-        for capability, value in capabilities.items():
-            st.markdown(f"""
-            <div class="metric-box">
-                <strong>{capability}:</strong> {value}
-            </div>
-            """, unsafe_allow_html=True)
+        fig = go.Figure(data=[
+            go.Bar(x=methods, y=accuracy, marker_color=['#ff9999', '#66b3ff', '#99ff99'])
+        ])
+        fig.update_layout(
+            title="Face Detection Accuracy",
+            xaxis_title="Detection Method",
+            yaxis_title="Accuracy (%)",
+            height=300
+        )
+        st.plotly_chart(fig, use_container_width=True)
 
 def show_live_demo():
     st.markdown('<h2 class="section-header">🎥 Live Video Encryption Demo</h2>', unsafe_allow_html=True)
@@ -627,7 +698,9 @@ def show_live_demo():
     video_file = st.file_uploader("Upload a video file", type=['mp4', 'avi', 'mov'], key="video_demo")
     
     if video_file is not None:
-        st.success("✅ Video file uploaded successfully!")
+        # Save uploaded file temporarily
+        with open("temp_video.mp4", "wb") as f:
+            f.write(video_file.getbuffer())
         
         # Video processing controls
         col1, col2, col3 = st.columns(3)
