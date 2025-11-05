@@ -1,0 +1,18 @@
+Category,Metric,Value,Raw Value,Unit
+File Size,Original Video,1.54 MB,1611169.0,bytes
+File Size,Encrypted Video,12.50 MB,13104322.0,bytes
+File Size,Decrypted Video,6.47 MB,6780856.0,bytes
+File Size,Size Increase (Encryption),+713.34%,713.3424861079129,percent
+Processing Time,Total Processing Time,11.55 sec,11.5508,seconds
+Processing Time,Total Encryption Time,898.20 ms,0.8982,seconds
+Processing Time,Total Decryption Time,189.70 ms,0.1897,seconds
+Processing Time,Avg Encryption/Frame,7.48 ms,7.4847,milliseconds
+Processing Time,Avg Decryption/Frame,1.58 ms,1.5809,milliseconds
+Performance,Average FPS,10.39,10.3888,fps
+Performance,Frames Processed,120,120.0,frames
+Quality,MSE,0.000000,0.0,value
+Quality,PSNR,∞,inf,dB
+Quality,NPCR,99.61%,99.6084,percent
+Quality,UACI,33.69%,33.6874,percent
+Security,Signature Verification,100.00%,100.0,percent
+Security,Total Faces Detected,85,85.0,count
